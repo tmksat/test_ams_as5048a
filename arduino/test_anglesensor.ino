@@ -11,7 +11,9 @@ volatile bool led_status = true;
 
 
 // AS5048
-volatile int g_angle = 0;
+volatile uint16_t g_angle = 0x0000;
+#define CMD_ANGLE (uint16_t)0x3FFF // RW=0(read) | Parity(Even)=0 | adr=0x3fff
+
 
 void setup() {
   // put your setup code here, to run once:
@@ -34,10 +36,10 @@ void setup() {
   SPI.begin();
   // spi0 software reset
   digitalWrite(SPI0_CS, LOW);
-  SPI.transfer(0xff);
-  SPI.transfer(0xff);
-  SPI.transfer(0xff);
-  SPI.transfer(0xff);
+  SPI.transfer(0x00);
+  SPI.transfer(0x00);
+  SPI.transfer(0x00);
+  SPI.transfer(0x00);
   digitalWrite(SPI0_CS, HIGH);
 }
 
@@ -45,6 +47,15 @@ void loop() {
   // put your main code here, to run repeatedly:
 
   // read angle value from as5048 via spi0
+  SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE1));
+  digitalWrite(SPI0_CS, LOW);
+  uint16_t req = CMD_ANGLE;
+  uint16_t res = 0x0000;
+  // SPI.transfer(&req, &res, 2);  //2byte
+  res = SPI.transfer16(req);
+  digitalWrite(SPI0_CS, HIGH);
+  SPI.endTransaction();
+  g_angle = res;
 
   // led blink 
   led_status = !led_status;
@@ -52,10 +63,9 @@ void loop() {
 
   // print angle value to serial console
   Serial.print("{angle:");
-  Serial.print(g_angle, DEC);
+  Serial.print(g_angle);
   Serial.println("}");
 
-
   // loop delay
-  delay(1000);
+  delay(25);
 }
