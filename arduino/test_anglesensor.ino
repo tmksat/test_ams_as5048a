@@ -49,13 +49,10 @@ void loop() {
   // read angle value from as5048 via spi0
   SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE1));
   digitalWrite(SPI0_CS, LOW);
-  uint16_t req = CMD_ANGLE;
-  uint16_t res = 0x0000;
-  // SPI.transfer(&req, &res, 2);  //2byte
-  res = SPI.transfer16(req);
+  uint16_t res = SPI.transfer16((uint16_t)CMD_ANGLE);
   digitalWrite(SPI0_CS, HIGH);
   SPI.endTransaction();
-  g_angle = res;
+  g_angle = (res & 0x3fff); // mask lower 14bit
 
   // led blink 
   led_status = !led_status;
